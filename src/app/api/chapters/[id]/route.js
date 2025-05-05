@@ -3,6 +3,31 @@ import { getServerSession } from 'next-auth'
 import prisma from '@/lib/prisma'
 import { authOptions } from '@/lib/auth'
 
+function serializeChapter(chapter) {
+  return {
+    ...chapter,
+    view_count: typeof chapter.view_count === 'object' && chapter.view_count !== null
+      ? Number(chapter.view_count)
+      : chapter.view_count || 0,
+    created_at: chapter.created_at ? new Date(chapter.created_at).toISOString() : null,
+    updated_at: chapter.updated_at ? new Date(chapter.updated_at).toISOString() : null,
+    // Add more fields if needed
+  }
+}
+
+function serializeNovel(novel) {
+  return {
+    ...novel,
+    chapters: Array.isArray(novel.chapters)
+      ? novel.chapters.map(chap => ({
+          ...chap,
+          created_at: chap.created_at ? new Date(chap.created_at).toISOString() : null,
+          updated_at: chap.updated_at ? new Date(chap.updated_at).toISOString() : null,
+        }))
+      : [],
+  }
+}
+
 export async function GET(req, context) {
   try {
     const session = await getServerSession(authOptions)
@@ -24,7 +49,9 @@ export async function GET(req, context) {
               select: {
                 chapter_id: true,
                 chapter_number: true,
-                title: true
+                title: true,
+                created_at: true,
+                updated_at: true
               },
               orderBy: {
                 chapter_number: 'asc'
@@ -83,7 +110,7 @@ export async function GET(req, context) {
     }
 
     return NextResponse.json({
-      chapter: {
+      chapter: serializeChapter({
         chapter_id: chapter.chapter_id,
         chapter_number: chapter.chapter_number,
         title: chapter.title,
@@ -93,15 +120,15 @@ export async function GET(req, context) {
         created_at: chapter.created_at,
         updated_at: chapter.updated_at,
         comments: chapter.chapter_comments || []
-      },
-      novel: {
+      }),
+      novel: serializeNovel({
         novel_id: chapter.novels.novel_id,
         title: chapter.novels.title,
         slug: chapter.novels.slug,
         cover_image_url: chapter.novels.cover_image_url,
         description: chapter.novels.description,
         chapters: chapter.novels.chapters
-      }
+      })
     })
   } catch (error) {
     console.error('Chapter fetch error:', error)
