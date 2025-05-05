@@ -54,6 +54,9 @@ async function getChapterAndNovel(slug, chapterId) {
     
     const data = await res.json();
     
+    // Debug log for API response
+    console.log('API response data:', data);
+    
     // Validate response data
     if (!data || !data.chapter || !data.novel) {
       console.error('Invalid API response structure:', data);
@@ -88,15 +91,19 @@ export default async function ChapterPage({ params }) {
     }
     
     const data = await getChapterAndNovel(slug, chapterId);
+    console.log('ChapterPage data:', data); // <-- Debug log
+    if (!data) {
+      return <div className="text-red-500">No data received from API.</div>;
+    }
     const { chapter, novel } = data;
 
     if (!chapter) {
-      console.error('No chapter data found');
+      console.error('No chapter data found', { data });
       return <div className="text-red-500">No chapter data found.</div>;
     }
     
     if (!chapter.content) {
-      console.error('Chapter content is empty');
+      console.error('Chapter content is empty', { chapter });
       return <div className="text-red-500">Chapter content is empty.</div>;
     }
 
@@ -226,6 +233,6 @@ export default async function ChapterPage({ params }) {
     )
   } catch (error) {
     console.error('Error in ChapterPage:', error);
-    return <div className="text-red-500">An error occurred while loading the chapter.</div>;
+    return <div className="text-red-500">An error occurred while loading the chapter. {error?.message}</div>;
   }
 } 
