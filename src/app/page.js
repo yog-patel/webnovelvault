@@ -8,7 +8,6 @@ async function getNovels() {
   try {
     const baseUrl = getBaseUrl()
     const apiUrl = `${baseUrl}/api/novels`
-    console.log('Fetching novels from:', apiUrl)
     
     const res = await fetch(apiUrl, {
       cache: 'no-store',
@@ -18,79 +17,102 @@ async function getNovels() {
     })
     
     if (!res.ok) {
-      const errorText = await res.text()
-      console.error('Failed to fetch novels. Status:', res.status)
-      console.error('Error response:', errorText)
-      throw new Error(`Failed to fetch novels: ${errorText}`)
+      throw new Error(`Failed to fetch novels: ${res.status}`)
     }
     
     const data = await res.json()
-    console.log('Successfully fetched novels data')
     return data
   } catch (error) {
     console.error('Error in getNovels:', error)
-    throw error
+    return {
+      featured: [],
+      newest: [],
+      popular: [],
+      completed: []
+    }
   }
 }
 
 export default async function Home() {
-  const { featured, newest, popular, completed } = await getNovels()
+  try {
+    const { featured, newest, popular, completed } = await getNovels()
 
-  return (
-    <div className="space-y-12">
-      {/* Hero Section */}
-      <HeroSection />
-      {/* Featured Novels Section */}
-      <section>
-        <SectionHeader 
-          title="Featured Novels" 
-          link="/novels?featured=true" 
-        />
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-          {featured.map((novel) => (
-            <NovelCard key={novel.novel_id} novel={novel} />
-          ))}
-        </div>
-      </section>
+    return (
+      <div className="space-y-12">
+        {/* Hero Section */}
+        <HeroSection />
+        
+        {/* Featured Novels Section */}
+        {featured.length > 0 && (
+          <section>
+            <SectionHeader 
+              title="Featured Novels" 
+              link="/novels?featured=true" 
+            />
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {featured.map((novel) => (
+                <NovelCard key={novel.novel_id} novel={novel} />
+              ))}
+            </div>
+          </section>
+        )}
 
-      {/* New Novels Section */}
-      <section>
-        <SectionHeader 
-          title="New Novels" 
-          link="/novels?sort=newest" 
-        />
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-          {newest.map((novel) => (
-            <NovelCard key={novel.novel_id} novel={novel} />
-          ))}
-        </div>
-      </section>
+        {/* New Novels Section */}
+        {newest.length > 0 && (
+          <section>
+            <SectionHeader 
+              title="New Novels" 
+              link="/novels?sort=newest" 
+            />
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {newest.map((novel) => (
+                <NovelCard key={novel.novel_id} novel={novel} />
+              ))}
+            </div>
+          </section>
+        )}
 
-      {/* Popular Novels Section */}
-      <section>
-        <SectionHeader 
-          title="Popular Novels" 
-          link="/novels?sort=popular" 
-        />
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-          {popular.map((novel) => (
-            <NovelCard key={novel.novel_id} novel={novel} />
-          ))}
-        </div>
-      </section>
+        {/* Popular Novels Section */}
+        {popular.length > 0 && (
+          <section>
+            <SectionHeader 
+              title="Popular Novels" 
+              link="/novels?sort=popular" 
+            />
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {popular.map((novel) => (
+                <NovelCard key={novel.novel_id} novel={novel} />
+              ))}
+            </div>
+          </section>
+        )}
 
-      {/* Completed Novels Section */}
-      <section>
-        <SectionHeader 
-          title="Completed Novels" 
-          link="/novels?status=completed" 
-        />
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-          {completed.map((novel) => (
-            <NovelCard key={novel.novel_id} novel={novel} />
-          ))}
+        {/* Completed Novels Section */}
+        {completed.length > 0 && (
+          <section>
+            <SectionHeader 
+              title="Completed Novels" 
+              link="/novels?status=completed" 
+            />
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {completed.map((novel) => (
+                <NovelCard key={novel.novel_id} novel={novel} />
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
+    )
+  } catch (error) {
+    console.error('Error in Home page:', error)
+    return (
+      <div className="space-y-12">
+        <HeroSection />
+        <div className="text-center py-8">
+          <h2 className="text-2xl font-semibold text-gray-300 mb-4">Something went wrong</h2>
+          <p className="text-gray-400">Please try again later</p>
         </div>
-      </section>
-    </div>
-  )
+      </div>
+    )
+  }
 }

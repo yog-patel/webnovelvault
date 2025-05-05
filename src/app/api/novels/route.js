@@ -2,21 +2,15 @@ import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 
 export async function GET() {
-  console.log('API Route: Fetching novels...')
-  
-  if (!prisma) {
-    console.error('Prisma client is not initialized')
-    return NextResponse.json(
-      { error: 'Database connection error' },
-      { status: 500 }
-    )
-  }
-
   try {
-    // Ensure we're connected to the database
-    if (!prisma.$isConnected) {
-      console.log('Connecting to database...')
-      await prisma.$connect()
+    // Check if Prisma client is initialized
+    if (!prisma) {
+      return NextResponse.json({
+        featured: [],
+        newest: [],
+        popular: [],
+        completed: []
+      })
     }
 
     // Define the base select object to minimize data fetched
@@ -83,10 +77,9 @@ export async function GET() {
     ])
 
     // Process results and handle any individual query failures
-    const [featured, newest, popular, completed] = results.map((result, index) => {
+    const [featured, newest, popular, completed] = results.map((result) => {
       if (result.status === 'rejected') {
-        console.error(`Query ${index} failed:`, result.reason)
-        return [] // Return empty array for failed queries
+        return []
       }
       return result.value
     })
@@ -95,25 +88,20 @@ export async function GET() {
     const serializeNovel = (novel) => {
       if (!novel) return null
       
-      try {
-        return {
-          ...novel,
-          novel_id: novel.novel_id,
-          title: novel.title || 'Untitled',
-          author: novel.author || 'Unknown',
-          slug: novel.slug || `novel-${novel.novel_id}`,
-          status: novel.status || 'ongoing',
-          cover_image_url: novel.cover_image_url || '/placeholder-cover.jpg',
-          average_rating: novel.average_rating ? parseFloat(novel.average_rating.toString()) : 0,
-          total_chapters: novel._count?.chapters || 0,
-          total_ratings: novel._count?.ratings || 0,
-          total_bookmarks: novel._count?.bookmarks || 0,
-          created_at: novel.created_at?.toISOString(),
-          updated_at: novel.updated_at?.toISOString()
-        }
-      } catch (error) {
-        console.error('Error serializing novel:', error)
-        return null
+      return {
+        ...novel,
+        novel_id: novel.novel_id,
+        title: novel.title || 'Untitled',
+        author: novel.author || 'Unknown',
+        slug: novel.slug || `novel-${novel.novel_id}`,
+        status: novel.status || 'ongoing',
+        cover_image_url: novel.cover_image_url || '/placeholder-cover.jpg',
+        average_rating: novel.average_rating ? parseFloat(novel.average_rating.toString()) : 0,
+        total_chapters: novel._count?.chapters || 0,
+        total_ratings: novel._count?.ratings || 0,
+        total_bookmarks: novel._count?.bookmarks || 0,
+        created_at: novel.created_at?.toISOString(),
+        updated_at: novel.updated_at?.toISOString()
       }
     }
 
@@ -124,26 +112,15 @@ export async function GET() {
       popular: popular.map(serializeNovel).filter(Boolean),
       completed: completed.map(serializeNovel).filter(Boolean)
     }
-
-    // Log the response size for monitoring
-    console.log('API Response size:', JSON.stringify(response).length)
     
     return NextResponse.json(response)
   } catch (error) {
-    console.error('API Route Error:', error)
-    console.error('Error stack:', error.stack)
-    return NextResponse.json(
-      { 
-        error: error.message || 'Failed to fetch novels',
-        code: error.code,
-        timestamp: new Date().toISOString()
-      },
-      { status: 500 }
-    )
-  } finally {
-    // Don't disconnect in development to maintain the connection
-    if (process.env.NODE_ENV === 'production') {
-      await prisma.$disconnect()
-    }
+    // Return empty arrays instead of error response
+    return NextResponse.json({
+      featured: [],
+      newest: [],
+      popular: [],
+      completed: []
+    })
   }
 } 
