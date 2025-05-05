@@ -17,8 +17,10 @@ export async function GET() {
     // Test database connection
     try {
       await prisma.$connect()
+      console.log('Database connection successful')
     } catch (error) {
       console.error('Database connection error:', error)
+      console.error('Database URL:', process.env.DATABASE_URL ? 'Set' : 'Not set')
       return NextResponse.json({
         featured: [],
         newest: [],
@@ -131,6 +133,7 @@ export async function GET() {
     return NextResponse.json(response)
   } catch (error) {
     console.error('API Route Error:', error)
+    console.error('Error stack:', error.stack)
     return NextResponse.json({
       featured: [],
       newest: [],
