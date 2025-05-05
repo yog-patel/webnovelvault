@@ -1,10 +1,10 @@
+import prisma from '@/lib/prisma'
 import dynamic from 'next/dynamic'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Suspense } from 'react'
 import ChapterViewTracker from '@/components/ChapterViewTracker'
 import SaveLastReadChapter from '@/components/SaveLastReadChapter'
-import { getBaseUrl } from '@/lib/utils'
 
 const ChapterCommentsSection = dynamic(() => import('@/components/ChapterCommentsSection'), {
   loading: () => <div className="animate-pulse bg-gray-800 rounded-lg p-6">
@@ -16,94 +16,97 @@ const ChapterCommentsSection = dynamic(() => import('@/components/ChapterComment
   </div>
 })
 
-async function getChapterAndNovel(slug, chapterId) {
-  try {
-    // Debug logs
-    console.log('Fetching chapter with params:', { slug, chapterId });
-    
-    // Validate chapterId
-    const chapterIdNum = parseInt(chapterId);
-    if (isNaN(chapterIdNum)) {
-      console.error('Invalid chapter ID:', chapterId);
-      return notFound();
-    }
-    
-    // Construct the API URL using getBaseUrl
-    const baseUrl = getBaseUrl();
-    const apiUrl = `${baseUrl}/api/chapters/${chapterIdNum}`;
-    
-    console.log('Fetching from URL:', apiUrl);
-    
-    // Fetch chapter data
-    const res = await fetch(apiUrl, {
-      cache: 'no-store',
-      headers: {
-        'Content-Type': 'application/json',
+async function getChapterAndNovelDirect(slug, chapterId) {
+  const chapterIdNum = parseInt(chapterId);
+  if (isNaN(chapterIdNum)) return null;
+
+  const chapter = await prisma.chapters.findUnique({
+    where: { chapter_id: chapterIdNum },
+    include: {
+      novels: {
+        select: {
+          novel_id: true,
+          title: true,
+          slug: true,
+          cover_image_url: true,
+          description: true,
+          chapters: {
+            select: {
+              chapter_id: true,
+              chapter_number: true,
+              title: true,
+              created_at: true,
+              updated_at: true
+            },
+            orderBy: { chapter_number: 'asc' }
+          }
+        }
       },
-    });
-    
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.error('API response error:', {
-        status: res.status,
-        statusText: res.statusText,
-        body: errorText
-      });
-      return notFound();
+      chapter_comments: {
+        where: { parent_comment_id: null },
+        include: {
+          users: { select: { username: true, display_name: true, avatar_url: true } },
+          other_chapter_comments: {
+            include: {
+              users: { select: { username: true, display_name: true, avatar_url: true } }
+            }
+          }
+        },
+        orderBy: { created_at: 'desc' }
+      }
     }
-    
-    const data = await res.json();
-    
-    // Debug log for API response
-    console.log('API response data:', data);
-    
-    // Validate response data
-    if (!data || !data.chapter || !data.novel) {
-      console.error('Invalid API response structure:', data);
-      return notFound();
+  });
+
+  if (!chapter || !chapter.novels || chapter.novels.slug !== slug) return null;
+
+  return {
+    chapter: {
+      chapter_id: chapter.chapter_id,
+      chapter_number: chapter.chapter_number,
+      title: chapter.title,
+      content: chapter.content,
+      is_free: chapter.is_free,
+      view_count: typeof chapter.view_count === 'object' && chapter.view_count !== null
+        ? Number(chapter.view_count)
+        : chapter.view_count || 0,
+      created_at: chapter.created_at ? new Date(chapter.created_at).toISOString() : null,
+      updated_at: chapter.updated_at ? new Date(chapter.updated_at).toISOString() : null,
+      comments: chapter.chapter_comments || []
+    },
+    novel: {
+      novel_id: chapter.novels.novel_id,
+      title: chapter.novels.title,
+      slug: chapter.novels.slug,
+      cover_image_url: chapter.novels.cover_image_url,
+      description: chapter.novels.description,
+      chapters: Array.isArray(chapter.novels.chapters)
+        ? chapter.novels.chapters.map(chap => ({
+            ...chap,
+            created_at: chap.created_at ? new Date(chap.created_at).toISOString() : null,
+            updated_at: chap.updated_at ? new Date(chap.updated_at).toISOString() : null,
+          }))
+        : [],
     }
-    
-    // Validate slug match
-    if (data.novel.slug !== slug) {
-      console.error('Slug mismatch:', {
-        expected: slug,
-        received: data.novel.slug,
-        novelId: data.novel.novel_id
-      });
-      return notFound();
-    }
-    
-    return data;
-  } catch (error) {
-    console.error('Error in getChapterAndNovel:', error);
-    throw error;
-  }
+  };
 }
 
 export default async function ChapterPage({ params }) {
   try {
-    console.log('ChapterPage params:', params);
-    
-    const { slug, chapterId } = await params;
+    const { slug, chapterId } = params;
     if (!slug || !chapterId) {
-      console.error('Missing required params:', { slug, chapterId });
       return notFound();
     }
-    
-    const data = await getChapterAndNovel(slug, chapterId);
-    console.log('ChapterPage data:', data); // <-- Debug log
+
+    const data = await getChapterAndNovelDirect(slug, chapterId);
     if (!data) {
-      return <div className="text-red-500">No data received from API.</div>;
+      return <div className="text-red-500">No chapter data found.</div>;
     }
     const { chapter, novel } = data;
 
     if (!chapter) {
-      console.error('No chapter data found', { data });
       return <div className="text-red-500">No chapter data found.</div>;
     }
-    
     if (!chapter.content) {
-      console.error('Chapter content is empty', { chapter });
       return <div className="text-red-500">Chapter content is empty.</div>;
     }
 
@@ -232,7 +235,6 @@ export default async function ChapterPage({ params }) {
       </>
     )
   } catch (error) {
-    console.error('Error in ChapterPage:', error);
     return <div className="text-red-500">An error occurred while loading the chapter. {error?.message}</div>;
   }
 } 
