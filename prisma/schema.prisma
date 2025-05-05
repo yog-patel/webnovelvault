@@ -1,0 +1,180 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model bookmarks {
+  bookmark_id       Int       @id @default(autoincrement())
+  user_id           Int?
+  novel_id          Int?
+  last_read_chapter Int?
+  created_at        DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime? @default(now()) @db.Timestamptz(6)
+  chapters          chapters? @relation(fields: [last_read_chapter], references: [chapter_id], onUpdate: NoAction)
+  novels            novels?   @relation(fields: [novel_id], references: [novel_id], onDelete: Cascade, onUpdate: NoAction)
+  users             users?    @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([user_id, novel_id])
+  @@index([user_id], map: "idx_bookmarks_user_id")
+}
+
+model chapter_comments {
+  comment_id             Int                @id @default(autoincrement())
+  chapter_id             Int?
+  user_id                Int?
+  content                String
+  created_at             DateTime?          @default(now()) @db.Timestamptz(6)
+  updated_at             DateTime?          @default(now()) @db.Timestamptz(6)
+  parent_comment_id      Int?
+  chapters               chapters?          @relation(fields: [chapter_id], references: [chapter_id], onDelete: Cascade, onUpdate: NoAction)
+  chapter_comments       chapter_comments?  @relation("chapter_commentsTochapter_comments", fields: [parent_comment_id], references: [comment_id], onDelete: Cascade, onUpdate: NoAction)
+  other_chapter_comments chapter_comments[] @relation("chapter_commentsTochapter_comments")
+  users                  users?             @relation(fields: [user_id], references: [user_id], onUpdate: NoAction)
+
+  @@index([chapter_id], map: "idx_chapter_comments_chapter_id")
+}
+
+model chapters {
+  chapter_id       Int                @id @default(autoincrement())
+  novel_id         Int?
+  chapter_number   Int
+  title            String?            @db.VarChar(255)
+  content          String
+  view_count       Int?               @default(0)
+  created_at       DateTime?          @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime?          @default(now()) @db.Timestamptz(6)
+  is_free          Boolean?           @default(true)
+  bookmarks        bookmarks[]
+  chapter_comments chapter_comments[]
+  novels           novels?            @relation(fields: [novel_id], references: [novel_id], onDelete: Cascade, onUpdate: NoAction)
+  reading_history  reading_history[]
+
+  @@index([novel_id], map: "idx_chapters_novel_id")
+}
+
+model genres {
+  genre_id     Int            @id @default(autoincrement())
+  name         String         @unique @db.VarChar(50)
+  description  String?
+  created_at   DateTime?      @default(now()) @db.Timestamptz(6)
+  novel_genres novel_genres[]
+}
+
+model novel_comments {
+  comment_id           Int              @id @default(autoincrement())
+  novel_id             Int?
+  user_id              Int?
+  content              String
+  created_at           DateTime?        @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime?        @default(now()) @db.Timestamptz(6)
+  parent_comment_id    Int?
+  novels               novels?          @relation(fields: [novel_id], references: [novel_id], onDelete: Cascade, onUpdate: NoAction)
+  novel_comments       novel_comments?  @relation("novel_commentsTonovel_comments", fields: [parent_comment_id], references: [comment_id], onDelete: Cascade, onUpdate: NoAction)
+  other_novel_comments novel_comments[] @relation("novel_commentsTonovel_comments")
+  users                users?           @relation(fields: [user_id], references: [user_id], onUpdate: NoAction)
+
+  @@index([novel_id], map: "idx_novel_comments_novel_id")
+}
+
+model novel_genres {
+  novel_id Int
+  genre_id Int
+  genres   genres @relation(fields: [genre_id], references: [genre_id], onDelete: Cascade, onUpdate: NoAction)
+  novels   novels @relation(fields: [novel_id], references: [novel_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([novel_id, genre_id])
+}
+
+model novel_tags {
+  novel_id Int
+  tag_id   Int
+  novels   novels @relation(fields: [novel_id], references: [novel_id], onDelete: Cascade, onUpdate: NoAction)
+  tags     tags   @relation(fields: [tag_id], references: [tag_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([novel_id, tag_id])
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model novels {
+  novel_id        Int              @id @default(autoincrement())
+  title           String           @db.VarChar(255)
+  author          String?          @db.VarChar(255)
+  cover_image_url String?
+  description     String?
+  status          String?          @db.VarChar(20)
+  average_rating  Decimal?         @db.Decimal(3, 2)
+  view_count      Int?             @default(0)
+  created_at      DateTime?        @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime?        @default(now()) @db.Timestamptz(6)
+  is_featured     Boolean?         @default(false)
+  language        String?          @default("English") @db.VarChar(50)
+  slug            String?          @unique @db.VarChar(511)
+  bookmarks       bookmarks[]
+  chapters        chapters[]
+  novel_comments  novel_comments[]
+  novel_genres    novel_genres[]
+  novel_tags      novel_tags[]
+  ratings         ratings[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ratings {
+  rating_id  Int       @id @default(autoincrement())
+  novel_id   Int?
+  user_id    Int?
+  score      Int?
+  review     String?
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at DateTime? @default(now()) @db.Timestamptz(6)
+  novels     novels?   @relation(fields: [novel_id], references: [novel_id], onDelete: Cascade, onUpdate: NoAction)
+  users      users?    @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([user_id, novel_id])
+  @@index([novel_id], map: "idx_ratings_novel_id")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model reading_history {
+  history_id          Int       @id @default(autoincrement())
+  user_id             Int?
+  chapter_id          Int?
+  progress_percentage Int?
+  read_at             DateTime? @default(now()) @db.Timestamptz(6)
+  chapters            chapters? @relation(fields: [chapter_id], references: [chapter_id], onDelete: Cascade, onUpdate: NoAction)
+  users               users?    @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([user_id, chapter_id])
+  @@index([user_id], map: "idx_reading_history_user_id")
+}
+
+model tags {
+  tag_id     Int          @id @default(autoincrement())
+  name       String       @unique @db.VarChar(50)
+  created_at DateTime?    @default(now()) @db.Timestamptz(6)
+  novel_tags novel_tags[]
+}
+
+model users {
+  user_id          Int                @id @default(autoincrement())
+  username         String             @unique @db.VarChar(50)
+  email            String             @unique @db.VarChar(100)
+  password_hash    String             @db.VarChar(255)
+  display_name     String?            @db.VarChar(100)
+  avatar_url       String?
+  bio              String?
+  created_at       DateTime?          @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime?          @default(now()) @db.Timestamptz(6)
+  last_login       DateTime?          @db.Timestamptz(6)
+  is_admin         Boolean?           @default(false)
+  is_active        Boolean?           @default(true)
+  bookmarks        bookmarks[]
+  chapter_comments chapter_comments[]
+  novel_comments   novel_comments[]
+  ratings          ratings[]
+  reading_history  reading_history[]
+}

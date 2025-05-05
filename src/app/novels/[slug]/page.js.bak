@@ -1,0 +1,88 @@
+import prisma from '@/lib/prisma'
+import { notFound } from 'next/navigation'
+import dynamic from 'next/dynamic'
+
+// Use dynamic imports for client components
+const NovelHeader = dynamic(() => import('@/components/NovelHeader'))
+const NovelContent = dynamic(() => import('@/components/NovelContent'))
+const CommentsSection = dynamic(() => import('@/components/CommentsSection'))
+
+async function getNovel(id) {
+  const novel = await prisma.novels.findUnique({
+    where: { novel_id: id },
+    include: {
+      novel_genres: {
+        include: {
+          genres: true
+        }
+      },
+      novel_tags: {
+        include: {
+          tags: true
+        }
+      },
+      chapters: {
+        orderBy: { chapter_number: 'asc' }
+      },
+      ratings: true,
+      _count: {
+        select: {
+          ratings: true
+        }
+      }
+    }
+  })
+
+  if (!novel) {
+    notFound()
+  }
+
+  // Convert Decimal to number for serialization
+  return {
+    ...novel,
+    average_rating: novel.average_rating ? parseFloat(novel.average_rating.toString()) : null,
+    ratings_count: novel._count.ratings
+  }
+}
+
+async function getComments(novelId) {
+  return prisma.novel_comments.findMany({
+    where: { 
+      novel_id: novelId,
+      parent_comment_id: null // Only get top-level comments
+    },
+    include: {
+      users: {
+        select: {
+          username: true,
+          avatar_url: true
+        }
+      },
+      other_novel_comments: {
+        include: {
+          users: {
+            select: {
+              username: true,
+              avatar_url: true
+            }
+          }
+        }
+      }
+    },
+    orderBy: { created_at: 'desc' }
+  })
+}
+
+export default async function NovelPage({ params }) {
+  const slug = params.slug
+  const novel = await getNovel(slug)
+  const comments = await getComments(novel.novel_id)
+
+  return (
+    <div className="space-y-8">
+      <NovelHeader novel={novel} />
+      <NovelContent novel={novel} />
+      <CommentsSection comments={comments} novelId={novel.novel_id} />
+    </div>
+  )
+} 

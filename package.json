@@ -9,15 +9,28 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
+    "@prisma/client": "^6.7.0",
+    "bcryptjs": "^3.0.2",
+    "date-fns": "^4.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "next": "15.3.1",
+    "next-auth": "^4.24.11",
+    "pg": "^8.14.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "next": "15.3.1"
+    "react-error-boundary": "^5.0.0",
+    "react-hot-toast": "^2.5.2",
+    "react-icons": "^5.5.0"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/forms": "^0.5.10",
     "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
+    "@tailwindcss/typography": "^0.5.16",
     "eslint": "^9",
     "eslint-config-next": "15.3.1",
-    "@eslint/eslintrc": "^3"
+    "prisma": "^6.7.0",
+    "tailwindcss": "^4"
   }
 }
