@@ -1,15 +1,17 @@
 import { Suspense } from 'react'
 import NovelCard from '@/components/NovelCard'
 import SectionHeader from '@/components/SectionHeader'
-import { getBaseUrl } from '@/lib/utils'
 import HeroSection from '@/components/HeroSection'
 
 async function getNovels() {
   try {
-    const baseUrl = getBaseUrl()
-    const apiUrl = `${baseUrl}/api/novels`
-    
-    const res = await fetch(apiUrl, {
+    // Use absolute URL for server-side fetch
+    const baseUrl =
+      process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}`
+        : 'http://localhost:3000';
+
+    const res = await fetch(`${baseUrl}/api/novels`, {
       cache: 'no-store',
       headers: {
         'Content-Type': 'application/json',
