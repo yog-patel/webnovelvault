@@ -150,7 +150,7 @@ export default async function Home() {
         <HeroSection />
         <div className="text-center py-8">
           <h2 className="text-2xl font-semibold text-gray-300 mb-4">Database Connection Issue</h2>
-          <p className="text-gray-400">We're having trouble connecting to our database. Please try again later.</p>
+          <p className="text-gray-400">We&apos;re having trouble connecting to our database. Please try again later.</p>
         </div>
       </div>
     )
