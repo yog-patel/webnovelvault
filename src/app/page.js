@@ -1,43 +1,78 @@
-import { Suspense } from 'react'
+import prisma from '@/lib/prisma'
 import NovelCard from '@/components/NovelCard'
 import SectionHeader from '@/components/SectionHeader'
 import HeroSection from '@/components/HeroSection'
 
-async function getNovels() {
-  try {
-    // Use absolute URL for server-side fetch
-    const baseUrl =
-      process.env.VERCEL_URL
-        ? `https://${process.env.VERCEL_URL}`
-        : 'http://localhost:3000';
+function serializeNovel(novel) {
+  return {
+    ...novel,
+    average_rating: novel.average_rating ? Number(novel.average_rating) : 0,
+    // Add similar conversions for other Decimal fields if needed
+  }
+}
 
-    const res = await fetch(`${baseUrl}/api/novels`, {
-      cache: 'no-store',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+async function getNovelsDirect() {
+  try {
+    // Define the base select object to minimize data fetched
+    const baseSelect = {
+      novel_id: true,
+      title: true,
+      author: true,
+      cover_image_url: true,
+      status: true,
+      average_rating: true,
+      slug: true,
+      created_at: true,
+      updated_at: true,
+      _count: {
+        select: {
+          chapters: true,
+          ratings: true,
+          bookmarks: true
+        }
+      }
+    }
+
+    // Featured novels
+    const featured = await prisma.novels.findMany({
+      where: { is_featured: true },
+      take: 6,
+      select: baseSelect
     })
-    
-    if (!res.ok) {
-      throw new Error(`Failed to fetch novels: ${res.status}`)
-    }
-    
-    const data = await res.json()
-    return data
-  } catch (error) {
-    console.error('Error in getNovels:', error)
+    // Newest novels
+    const newest = await prisma.novels.findMany({
+      orderBy: { created_at: 'desc' },
+      take: 6,
+      select: baseSelect
+    })
+    // Popular novels
+    const popular = await prisma.novels.findMany({
+      orderBy: { view_count: 'desc' },
+      take: 6,
+      select: baseSelect
+    })
+    // Completed novels
+    const completed = await prisma.novels.findMany({
+      where: { status: 'completed' },
+      take: 6,
+      select: baseSelect
+    })
+
     return {
-      featured: [],
-      newest: [],
-      popular: [],
-      completed: []
+      featured: featured.map(serializeNovel),
+      newest: newest.map(serializeNovel),
+      popular: popular.map(serializeNovel),
+      completed: completed.map(serializeNovel)
     }
+  } catch (error) {
+    console.error('Error in getNovelsDirect:', error)
+    return { featured: [], newest: [], popular: [], completed: [] }
   }
 }
 
 export default async function Home() {
   try {
-    const { featured, newest, popular, completed } = await getNovels()
+    const { featured, newest, popular, completed } = await getNovelsDirect()
 
     return (
       <div className="space-y-12">
