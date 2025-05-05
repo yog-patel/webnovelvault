@@ -2,8 +2,8 @@ import { PrismaClient } from '@prisma/client'
 
 const prismaClientSingleton = () => {
   return new PrismaClient({
-    log: ['query', 'info', 'warn', 'error'],
-    errorFormat: 'pretty',
+    log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
+    errorFormat: 'minimal',
   })
 }
 
@@ -26,8 +26,10 @@ const testConnection = async () => {
     console.log('Prisma client connected successfully')
   } catch (error) {
     console.error('Prisma connection error:', error)
-    // Attempt to reconnect after a delay
-    setTimeout(testConnection, 5000)
+    // In production, we don't want to keep retrying
+    if (process.env.NODE_ENV === 'development') {
+      setTimeout(testConnection, 5000)
+    }
   }
 }
 

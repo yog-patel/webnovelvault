@@ -43,7 +43,7 @@ export default async function Home() {
         <HeroSection />
         
         {/* Featured Novels Section */}
-        {featured.length > 0 && (
+        {featured.length > 0 ? (
           <section>
             <SectionHeader 
               title="Featured Novels" 
@@ -55,10 +55,20 @@ export default async function Home() {
               ))}
             </div>
           </section>
+        ) : (
+          <section>
+            <SectionHeader 
+              title="Featured Novels" 
+              link="/novels?featured=true" 
+            />
+            <div className="text-center py-8">
+              <p className="text-gray-400">No featured novels available at the moment.</p>
+            </div>
+          </section>
         )}
 
         {/* New Novels Section */}
-        {newest.length > 0 && (
+        {newest.length > 0 ? (
           <section>
             <SectionHeader 
               title="New Novels" 
@@ -70,10 +80,20 @@ export default async function Home() {
               ))}
             </div>
           </section>
+        ) : (
+          <section>
+            <SectionHeader 
+              title="New Novels" 
+              link="/novels?sort=newest" 
+            />
+            <div className="text-center py-8">
+              <p className="text-gray-400">No new novels available at the moment.</p>
+            </div>
+          </section>
         )}
 
         {/* Popular Novels Section */}
-        {popular.length > 0 && (
+        {popular.length > 0 ? (
           <section>
             <SectionHeader 
               title="Popular Novels" 
@@ -85,10 +105,20 @@ export default async function Home() {
               ))}
             </div>
           </section>
+        ) : (
+          <section>
+            <SectionHeader 
+              title="Popular Novels" 
+              link="/novels?sort=popular" 
+            />
+            <div className="text-center py-8">
+              <p className="text-gray-400">No popular novels available at the moment.</p>
+            </div>
+          </section>
         )}
 
         {/* Completed Novels Section */}
-        {completed.length > 0 && (
+        {completed.length > 0 ? (
           <section>
             <SectionHeader 
               title="Completed Novels" 
@@ -100,6 +130,16 @@ export default async function Home() {
               ))}
             </div>
           </section>
+        ) : (
+          <section>
+            <SectionHeader 
+              title="Completed Novels" 
+              link="/novels?status=completed" 
+            />
+            <div className="text-center py-8">
+              <p className="text-gray-400">No completed novels available at the moment.</p>
+            </div>
+          </section>
         )}
       </div>
     )
@@ -109,8 +149,8 @@ export default async function Home() {
       <div className="space-y-12">
         <HeroSection />
         <div className="text-center py-8">
-          <h2 className="text-2xl font-semibold text-gray-300 mb-4">Something went wrong</h2>
-          <p className="text-gray-400">Please try again later</p>
+          <h2 className="text-2xl font-semibold text-gray-300 mb-4">Database Connection Issue</h2>
+          <p className="text-gray-400">We're having trouble connecting to our database. Please try again later.</p>
         </div>
       </div>
     )

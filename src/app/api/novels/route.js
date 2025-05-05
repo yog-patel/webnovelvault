@@ -5,6 +5,20 @@ export async function GET() {
   try {
     // Check if Prisma client is initialized
     if (!prisma) {
+      console.error('Prisma client is not initialized')
+      return NextResponse.json({
+        featured: [],
+        newest: [],
+        popular: [],
+        completed: []
+      })
+    }
+
+    // Test database connection
+    try {
+      await prisma.$connect()
+    } catch (error) {
+      console.error('Database connection error:', error)
       return NextResponse.json({
         featured: [],
         newest: [],
@@ -79,6 +93,7 @@ export async function GET() {
     // Process results and handle any individual query failures
     const [featured, newest, popular, completed] = results.map((result) => {
       if (result.status === 'rejected') {
+        console.error('Query failed:', result.reason)
         return []
       }
       return result.value
@@ -115,12 +130,18 @@ export async function GET() {
     
     return NextResponse.json(response)
   } catch (error) {
-    // Return empty arrays instead of error response
+    console.error('API Route Error:', error)
     return NextResponse.json({
       featured: [],
       newest: [],
       popular: [],
       completed: []
     })
+  } finally {
+    try {
+      await prisma.$disconnect()
+    } catch (error) {
+      console.error('Error disconnecting from database:', error)
+    }
   }
 } 
