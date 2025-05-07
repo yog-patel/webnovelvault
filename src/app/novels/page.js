@@ -158,20 +158,58 @@ export default async function NovelsPage({ searchParams }) {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex justify-center mt-8">
-            <div className="flex space-x-2">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-                <Link
-                  key={pageNum}
-                  href={`/novels?page=${pageNum}${queryString ? `&${queryString}` : ''}`}
-                  className={`px-4 py-2 rounded ${
-                    currentPage === pageNum
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                >
-                  {pageNum}
-                </Link>
-              ))}
+            <div className="flex items-center space-x-2">
+              {/* Previous Button */}
+              <Link
+                href={`/novels?page=${currentPage - 1}${queryString ? `&${queryString}` : ''}`}
+                className={`px-3 py-2 rounded ${currentPage === 1 ? 'bg-gray-300 text-gray-400 cursor-not-allowed' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                aria-disabled={currentPage === 1}
+                tabIndex={currentPage === 1 ? -1 : 0}
+              >
+                Prev
+              </Link>
+
+              {/* Page Numbers with Ellipsis */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(pageNum =>
+                  pageNum === 1 ||
+                  pageNum === totalPages ||
+                  (pageNum >= currentPage - 2 && pageNum <= currentPage + 2)
+                )
+                .map((pageNum, idx, arr) => {
+                  // Add ellipsis if needed
+                  if (
+                    idx > 0 &&
+                    pageNum !== arr[idx - 1] + 1
+                  ) {
+                    return (
+                      <span key={`ellipsis-${pageNum}`} className="px-2 py-2 text-gray-400">...</span>
+                    );
+                  }
+                  return (
+                    <Link
+                      key={pageNum}
+                      href={`/novels?page=${pageNum}${queryString ? `&${queryString}` : ''}`}
+                      className={`px-4 py-2 rounded ${
+                        currentPage === pageNum
+                          ? 'bg-purple-600 text-white font-bold'
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                    >
+                      {pageNum}
+                    </Link>
+                  );
+                })}
+
+              {/* Next Button */}
+              <Link
+                href={`/novels?page=${currentPage + 1}${queryString ? `&${queryString}` : ''}`}
+                className={`px-3 py-2 rounded ${currentPage === totalPages ? 'bg-gray-300 text-gray-400 cursor-not-allowed' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                aria-disabled={currentPage === totalPages}
+                tabIndex={currentPage === totalPages ? -1 : 0}
+              >
+                Next
+              </Link>
             </div>
           </div>
         )}
