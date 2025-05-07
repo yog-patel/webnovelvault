@@ -14,7 +14,7 @@ export default function HeroSection() {
             Web Novel Vault
           </h1>
           <p className="text-lg sm:text-xl md:text-2xl text-gray-300 mb-8 md:mb-12">
-            Discover a vast collection of translated Japanese, Chinese, and Korean light novels. Immerse yourself in captivating stories updated daily.
+            Read light novel, web novel, korean novel and chinese novel online for free. You can find hundreds of english translated light novel, web novel, korean novel and chinese novel which are daily updated!
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link href="/novels" className="inline-flex items-center px-6 py-3 rounded-lg bg-purple-600 hover:bg-purple-700 transition text-white font-semibold">
