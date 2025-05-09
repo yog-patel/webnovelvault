@@ -5,21 +5,15 @@ import { usePathname, useRouter } from 'next/navigation'
 import { FaBook, FaTrophy, FaSearch, FaUser, FaBookmark, FaBars, FaTimes, FaHome } from 'react-icons/fa'
 import { useSession } from 'next-auth/react'
 import { useState, useEffect } from 'react'
-import { useDebounce } from '@/hooks/useDebounce'
+import SearchDropdown from './SearchDropdown'
 
 export default function Layout({ children }) {
   const pathname = usePathname()
   const router = useRouter()
   const { data: session } = useSession()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const debouncedSearchQuery = useDebounce(searchQuery, 500)
-
-  useEffect(() => {
-    if (debouncedSearchQuery) {
-      router.push(`/search?q=${encodeURIComponent(debouncedSearchQuery)}`)
-    }
-  }, [debouncedSearchQuery, router])
 
   const navItems = [
     { name: 'Home', href: '/', icon: <FaHome /> },
@@ -27,13 +21,17 @@ export default function Layout({ children }) {
     { name: 'Rankings', href: '/rankings', icon: <FaTrophy /> },
   ]
 
-  const handleSearch = (e) => {
-    e.preventDefault()
-    if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
-      setIsMobileMenuOpen(false)
+  // Close search dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isSearchOpen && !event.target.closest('.search-container')) {
+        setIsSearchOpen(false)
+      }
     }
-  }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isSearchOpen])
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -66,17 +64,28 @@ export default function Layout({ children }) {
             </div>
 
             <div className="flex items-center">
-              <form onSubmit={handleSearch} className="relative mx-4 hidden lg:block">
-                <input
-                  type="text"
-                  placeholder="Search novels..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="bg-gray-700 text-white px-4 py-2 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  aria-label="Search novels"
-                />
-                <FaSearch className="absolute right-3 top-3 text-gray-400" />
-              </form>
+              {/* Search Container */}
+              <div className="relative search-container mx-4 hidden lg:block">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search novels..."
+                    className="bg-gray-700 text-white px-4 py-2 rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    aria-label="Search novels"
+                    onFocus={() => setIsSearchOpen(true)}
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && searchQuery.trim()) {
+                        router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+                        setIsSearchOpen(false)
+                      }
+                    }}
+                  />
+                  <FaSearch className="absolute right-3 top-3 text-gray-400" />
+                </div>
+                <SearchDropdown isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+              </div>
 
               {session ? (
                 <div className="hidden lg:flex items-center space-x-4">
@@ -126,20 +135,29 @@ export default function Layout({ children }) {
         {/* Mobile/Tablet menu */}
         <div className={`lg:hidden ${isMobileMenuOpen ? 'block' : 'hidden'}`}>
           <div className="px-2 pt-2 pb-3 space-y-1">
-            {/* Search Bar */}
-            <form onSubmit={handleSearch} className="px-3 py-2">
+            {/* Search Container */}
+            <div className="px-3 py-2 search-container relative">
               <div className="relative">
                 <input
                   type="text"
                   placeholder="Search novels..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full bg-gray-700 text-white px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                   aria-label="Search novels"
+                  onFocus={() => setIsSearchOpen(true)}
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && searchQuery.trim()) {
+                      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+                      setIsMobileMenuOpen(false)
+                      setIsSearchOpen(false)
+                    }
+                  }}
                 />
                 <FaSearch className="absolute right-3 top-3 text-gray-400" />
               </div>
-            </form>
+              <SearchDropdown isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+            </div>
 
             {navItems.map((item) => (
               <Link
