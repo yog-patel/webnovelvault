@@ -54,55 +54,8 @@ async function getRankedNovels(category) {
       orderBy.push({ view_count: 'desc' }, { average_rating: 'desc' })
       break
     case 'rating':
-      // For rating sorting, we'll handle null values in memory after fetching
-      const novels = await prisma.novels.findMany({
-        take: 20,
-        select: {
-          novel_id: true,
-          title: true,
-          author: true,
-          cover_image_url: true,
-          status: true,
-          average_rating: true,
-          slug: true,
-          view_count: true,
-          novel_genres: {
-            select: {
-              genres: {
-                select: {
-                  genre_id: true,
-                  name: true
-                }
-              }
-            }
-          },
-          chapters: {
-            select: {
-              chapter_id: true
-            }
-          },
-          _count: {
-            select: {
-              novel_comments: true,
-              bookmarks: true,
-              chapters: true
-            }
-          }
-        }
-      })
-
-      // Sort novels with null ratings last
-      return novels
-        .map(novel => ({
-          ...novel,
-          average_rating: novel.average_rating ? parseFloat(novel.average_rating.toString()) : null
-        }))
-        .sort((a, b) => {
-          if (a.average_rating === null && b.average_rating === null) return 0;
-          if (a.average_rating === null) return 1;
-          if (b.average_rating === null) return -1;
-          return b.average_rating - a.average_rating;
-        });
+      orderBy.push({ average_rating: 'desc' })
+      break
     case 'reads':
       orderBy.push({ view_count: 'desc' })
       break
@@ -127,6 +80,11 @@ async function getRankedNovels(category) {
   const novels = await prisma.novels.findMany({
     take: 20,
     orderBy,
+    where: category === 'rating' ? {
+      average_rating: {
+        not: null
+      }
+    } : undefined,
     select: {
       novel_id: true,
       title: true,
@@ -155,7 +113,8 @@ async function getRankedNovels(category) {
         select: {
           novel_comments: true,
           bookmarks: true,
-          chapters: true
+          chapters: true,
+          ratings: true
         }
       }
     }
@@ -164,7 +123,8 @@ async function getRankedNovels(category) {
   // Serialize Decimal fields to numbers
   return novels.map(novel => ({
     ...novel,
-    average_rating: novel.average_rating ? parseFloat(novel.average_rating.toString()) : null
+    average_rating: novel.average_rating ? parseFloat(novel.average_rating.toString()) : null,
+    ratings_count: novel._count.ratings
   }))
 }
 
@@ -230,7 +190,7 @@ export default async function RankingsPage({ params: { category: rawCategory } }
               <NovelCard 
                 novel={novel}
                 rankingStat={
-                  // category === 'rating' ? { label: 'Rating', value: novel.average_rating?.toFixed(1) || 'N/A' } :
+                  category === 'rating' ? { label: 'Rating', value: novel.average_rating?.toFixed(1) || 'N/A' } :
                   category === 'reads' ? { label: 'Views', value: novel.view_count?.toLocaleString() } :
                   category === 'comments' ? { label: 'Comments', value: novel._count.novel_comments } :
                   category === 'bookmarks' ? { label: 'Bookmarks', value: novel._count.bookmarks } :
