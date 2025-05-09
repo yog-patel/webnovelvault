@@ -75,12 +75,6 @@ export default function Layout({ children }) {
                     onFocus={() => setIsSearchOpen(true)}
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' && searchQuery.trim()) {
-                        router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
-                        setIsSearchOpen(false)
-                      }
-                    }}
                   />
                   <FaSearch className="absolute right-3 top-3 text-gray-400" />
                 </div>
@@ -146,13 +140,6 @@ export default function Layout({ children }) {
                   onFocus={() => setIsSearchOpen(true)}
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' && searchQuery.trim()) {
-                      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
-                      setIsMobileMenuOpen(false)
-                      setIsSearchOpen(false)
-                    }
-                  }}
                 />
                 <FaSearch className="absolute right-3 top-3 text-gray-400" />
               </div>
