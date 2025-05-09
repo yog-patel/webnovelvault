@@ -68,10 +68,6 @@ export default function ChapterList({ chapters = [], novelSlug }) {
               <FaClock className="text-purple-400" />
               {formatDate(latestChapter.created_at)}
             </div>
-            <div className="flex items-center gap-1">
-              <FaEye className="text-purple-400" />
-              {latestChapter.view_count || 0} views
-            </div>
           </div>
         </div>
       )}
@@ -96,10 +92,6 @@ export default function ChapterList({ chapters = [], novelSlug }) {
                         {chapter.title || `Chapter ${chapter.chapter_number}`}
                       </h3>
                       <div className="flex items-center gap-4 mt-1">
-                        <div className="flex items-center gap-1 text-sm text-gray-400">
-                          <FaEye className="text-purple-400" />
-                          {chapter.view_count || 0} views
-                        </div>
                         {chapter.created_at && (
                           <div className="flex items-center gap-1 text-sm text-gray-400">
                             <FaClock className="text-purple-400" />
@@ -108,12 +100,6 @@ export default function ChapterList({ chapters = [], novelSlug }) {
                         )}
                       </div>
                     </div>
-                    {!chapter.is_free && !session && (
-                      <div className="flex items-center gap-2 text-yellow-400">
-                        <FaLock className="text-sm" />
-                        <span className="text-sm">Premium</span>
-                      </div>
-                    )}
                   </div>
                 </Link>
               </div>
