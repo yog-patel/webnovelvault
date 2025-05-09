@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 
 export async function PUT(req) {
   try {
-    const session = await getServerSession()
+    const session = await getServerSession(authOptions)
     if (!session) {
       return NextResponse.json(
         { message: 'Unauthorized' },
@@ -21,24 +22,25 @@ export async function PUT(req) {
       )
     }
 
-    const user = await prisma.user.update({
+    const user = await prisma.users.update({
       where: {
-        id: parseInt(session.user.id)
+        user_id: parseInt(session.user.id)
       },
       data: {
-        displayName,
-        bio,
-        avatarUrl
+        display_name: displayName,
+        bio: bio || null,
+        avatar_url: avatarUrl || null,
+        updated_at: new Date()
       }
     })
 
     return NextResponse.json({
-      id: user.id,
+      id: user.user_id,
       username: user.username,
       email: user.email,
-      displayName: user.displayName,
+      displayName: user.display_name,
       bio: user.bio,
-      avatarUrl: user.avatarUrl
+      avatarUrl: user.avatar_url
     })
   } catch (error) {
     console.error('Profile update error:', error)
@@ -51,7 +53,7 @@ export async function PUT(req) {
 
 export async function GET(req) {
   try {
-    const session = await getServerSession()
+    const session = await getServerSession(authOptions)
     if (!session) {
       return NextResponse.json(
         { message: 'Unauthorized' },
@@ -59,21 +61,21 @@ export async function GET(req) {
       )
     }
 
-    const user = await prisma.user.findUnique({
+    const user = await prisma.users.findUnique({
       where: {
-        id: parseInt(session.user.id)
+        user_id: parseInt(session.user.id)
       },
       select: {
-        id: true,
+        user_id: true,
         username: true,
         email: true,
-        displayName: true,
+        display_name: true,
         bio: true,
-        avatarUrl: true,
+        avatar_url: true,
         _count: {
           select: {
             bookmarks: true,
-            readingHistory: true
+            reading_history: true
           }
         }
       }
@@ -87,9 +89,14 @@ export async function GET(req) {
     }
 
     return NextResponse.json({
-      ...user,
+      id: user.user_id,
+      username: user.username,
+      email: user.email,
+      displayName: user.display_name,
+      bio: user.bio,
+      avatarUrl: user.avatar_url,
       bookmarkCount: user._count.bookmarks,
-      readHistoryCount: user._count.readingHistory
+      readHistoryCount: user._count.reading_history
     })
   } catch (error) {
     console.error('Profile fetch error:', error)

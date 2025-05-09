@@ -13,11 +13,23 @@ const Comment = ({ comment, onReply }) => {
     <div className="pt-4">
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0">
-          <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center">
-            <span className="text-white font-medium">
-              {comment.user?.name?.[0]?.toUpperCase() || 'A'}
-            </span>
-          </div>
+          {comment.user?.avatar_url ? (
+            <div className="w-10 h-10 rounded-full overflow-hidden">
+              <Image
+                src={comment.user.avatar_url}
+                alt={comment.user.display_name || comment.user.username}
+                width={40}
+                height={40}
+                className="object-cover"
+              />
+            </div>
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center">
+              <span className="text-white font-medium">
+                {comment.user?.name?.[0]?.toUpperCase() || 'A'}
+              </span>
+            </div>
+          )}
         </div>
         <div className="flex-grow space-y-2">
           <div className="flex items-center gap-2">
@@ -46,11 +58,23 @@ const Comment = ({ comment, onReply }) => {
             <div key={reply.comment_id} className="pl-4">
               <div className="flex items-start gap-3">
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 rounded-full bg-purple-600/80 flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">
-                      {reply.user?.name?.[0]?.toUpperCase() || 'A'}
-                    </span>
-                  </div>
+                  {reply.user?.avatar_url ? (
+                    <div className="w-8 h-8 rounded-full overflow-hidden">
+                      <Image
+                        src={reply.user.avatar_url}
+                        alt={reply.user.display_name || reply.user.username}
+                        width={32}
+                        height={32}
+                        className="object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-purple-600/80 flex items-center justify-center">
+                      <span className="text-white text-sm font-medium">
+                        {reply.user?.name?.[0]?.toUpperCase() || 'A'}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <div className="flex-grow space-y-2">
                   <div className="flex items-center gap-2">
@@ -70,11 +94,16 @@ const Comment = ({ comment, onReply }) => {
   );
 };
 
-export default function ChapterCommentsSection({ comments = [], chapterId, onCommentAdded }) {
+export default function ChapterCommentsSection({ comments: initialComments = [], chapterId, onCommentAdded }) {
   const { data: session } = useSession()
+  const [comments, setComments] = useState(initialComments)
   const [comment, setComment] = useState('')
   const [replyTo, setReplyTo] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    setComments(initialComments)
+  }, [initialComments])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -99,6 +128,28 @@ export default function ChapterCommentsSection({ comments = [], chapterId, onCom
       }
 
       const newComment = await response.json()
+      
+      // Update comments state
+      if (!replyTo) {
+        // For new top-level comments
+        setComments(prevComments => [{
+          ...newComment,
+          replies: []
+        }, ...prevComments])
+      } else {
+        // For replies
+        setComments(prevComments =>
+          prevComments.map(comment =>
+            comment.comment_id === replyTo.comment_id
+              ? {
+                  ...comment,
+                  replies: [newComment, ...(comment.replies || [])]
+                }
+              : comment
+          )
+        )
+      }
+
       setComment('')
       setReplyTo(null)
       if (onCommentAdded) {
@@ -128,7 +179,7 @@ export default function ChapterCommentsSection({ comments = [], chapterId, onCom
             <div className="mb-4 p-3 bg-gray-800/50 rounded-lg backdrop-blur-sm">
               <div className="flex items-center justify-between">
                 <p className="text-sm text-gray-400">
-                  Replying to <span className="text-purple-400">{replyTo.user?.name || 'Anonymous'}</span>
+                  Replying to <span className="text-purple-400">{replyTo.user?.display_name || replyTo.user?.username || 'Anonymous'}</span>
                 </p>
                 <button
                   onClick={() => setReplyTo(null)}

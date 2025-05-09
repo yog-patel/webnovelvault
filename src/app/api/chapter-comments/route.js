@@ -33,6 +33,7 @@ export async function POST(req) {
         users: {
           select: {
             username: true,
+            display_name: true,
             avatar_url: true
           }
         },
@@ -41,6 +42,7 @@ export async function POST(req) {
             users: {
               select: {
                 username: true,
+                display_name: true,
                 avatar_url: true
               }
             }
@@ -80,6 +82,7 @@ export async function GET(req) {
         users: {
           select: {
             username: true,
+            display_name: true,
             avatar_url: true
           }
         },
@@ -88,6 +91,7 @@ export async function GET(req) {
             users: {
               select: {
                 username: true,
+                display_name: true,
                 avatar_url: true
               }
             }

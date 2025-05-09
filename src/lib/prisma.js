@@ -2,22 +2,20 @@ import { PrismaClient } from '@prisma/client'
 
 const prismaClientSingleton = () => {
   return new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
-    errorFormat: 'minimal',
+    log: ['error', 'warn'],
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL
+      }
+    }
   })
 }
 
-let prisma
+const globalForPrisma = globalThis
 
-if (process.env.NODE_ENV === 'production') {
-  prisma = prismaClientSingleton()
-} else {
-  // In development, use a global variable to prevent multiple instances
-  if (!global.prisma) {
-    global.prisma = prismaClientSingleton()
-  }
-  prisma = global.prisma
-}
+const prisma = globalForPrisma.prisma ?? prismaClientSingleton()
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 
 // Test the connection and handle errors
 const testConnection = async () => {

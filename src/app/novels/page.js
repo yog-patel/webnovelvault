@@ -4,176 +4,82 @@ import NovelCard from '@/components/NovelCard'
 import NovelFilters from '@/components/NovelFilters'
 import Link from 'next/link'
 
-async function getNovels(searchParams = {}) {
+async function getNovels(page = 1, limit = 10, sort = 'newest', genre = null, search = null) {
   try {
-    // Safely extract parameters with defaults
-    const params = await Promise.resolve(searchParams)
-    const genreParam = params?.genre || null
-    const genres = genreParam ? genreParam.split(',').filter(Boolean) : []
-    const status = params?.status || 'all'
-    const sort = params?.sort || 'newest'
-    const featured = params?.featured || null
-    const page = parseInt(params?.page || '1')
-    const limit = parseInt(params?.limit || '12')
-
+    const skip = (page - 1) * limit
     const where = {}
     
-    // Prisma query (OR logic)
-    if (genres.length > 0) {
+    if (genre) {
       where.novel_genres = {
         some: {
           genres: {
-            name: { in: genres }
+            name: genre
           }
         }
       }
     }
-
-    // Handle status filter
-    if (status && status !== 'all') {
-      where.status = {
-        equals: status.toLowerCase(),
-        mode: 'insensitive'
-      }
+    
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { author: { contains: search, mode: 'insensitive' } }
+      ]
     }
 
-    // Handle featured filter
-    if (featured === 'true') {
-      where.is_featured = true
+    let orderBy = {}
+    switch (sort) {
+      case 'newest':
+        orderBy = { created_at: 'desc' }
+        break
+      case 'oldest':
+        orderBy = { created_at: 'asc' }
+        break
+      case 'rating':
+        orderBy = { average_rating: 'desc' }
+        break
+      case 'views':
+        orderBy = { view_count: 'desc' }
+        break
+      default:
+        orderBy = { created_at: 'desc' }
     }
 
-    // Handle sorting
-    const orderBy = {}
-    let processedNovels = []
-    let total = 0
-
-    if (sort === 'newest') {
-      orderBy.created_at = 'desc'
-    } else if (sort === 'popular') {
-      orderBy.view_count = 'desc'
-    } else if (sort === 'rating') {
-      // For rating sorting, we'll handle null values in memory after fetching
-      const [novels, count] = await Promise.all([
-        prisma.novels.findMany({
-          where,
-          skip: 0,
-          take: 1000,
-          select: {
-            novel_id: true,
-            title: true,
-            author: true,
-            cover_image_url: true,
-            status: true,
-            average_rating: true,
-            slug: true,
-            novel_genres: {
-              include: {
-                genres: true
-              }
-            },
-            _count: {
-              select: {
-                chapters: true
-              }
+    const [novels, count] = await Promise.all([
+      prisma.novels.findMany({
+        where,
+        orderBy,
+        take: limit,
+        skip,
+        select: {
+          novel_id: true,
+          title: true,
+          author: true,
+          cover_image_url: true,
+          status: true,
+          average_rating: true,
+          slug: true,
+          created_at: true,
+          updated_at: true,
+          _count: {
+            select: {
+              chapters: true,
+              ratings: true,
+              bookmarks: true
             }
           }
-        }),
-        prisma.novels.count({ where })
-      ])
-
-      total = count
-
-      // Sort novels with null ratings last
-      processedNovels = novels
-        .map(novel => ({
-          ...novel,
-          average_rating: novel.average_rating ? parseFloat(novel.average_rating.toString()) : null
-        }))
-        .sort((a, b) => {
-          if (a.average_rating === null && b.average_rating === null) return 0;
-          if (a.average_rating === null) return 1;
-          if (b.average_rating === null) return -1;
-          return b.average_rating - a.average_rating;
-        });
-    }
-
-    console.log('Query where clause:', where) // Debug log
-
-    // If we haven't processed novels yet (for non-rating sorts), fetch them now
-    if (processedNovels.length === 0) {
-      const [novels, count] = await Promise.all([
-        prisma.novels.findMany({
-          where,
-          orderBy,
-          skip: 0,
-          take: 1000,
-          select: {
-            novel_id: true,
-            title: true,
-            author: true,
-            cover_image_url: true,
-            status: true,
-            average_rating: true,
-            slug: true,
-            novel_genres: {
-              include: {
-                genres: true
-              }
-            },
-            _count: {
-              select: {
-                chapters: true
-              }
-            }
-          }
-        }),
-        prisma.novels.count({ where })
-      ])
-
-      total = count
-
-      // Create completely new plain objects for each novel
-      processedNovels = novels.map(novel => ({
-        novel_id: Number(novel.novel_id),
-        title: String(novel.title),
-        author: String(novel.author || ''),
-        cover_image_url: String(novel.cover_image_url || ''),
-        status: String(novel.status || 'ongoing'),
-        average_rating: novel.average_rating ? Number(novel.average_rating) : null,
-        slug: String(novel.slug),
-        novel_genres: novel.novel_genres.map(ng => ({
-          genres: {
-            genre_id: Number(ng.genres.genre_id),
-            name: String(ng.genres.name)
-          }
-        })),
-        _count: {
-          chapters: Number(novel._count.chapters)
         }
-      }))
+      }),
+      prisma.novels.count({ where })
+    ])
+
+    return {
+      novels,
+      totalPages: Math.ceil(count / limit),
+      currentPage: page
     }
-
-    console.log('Found novels:', processedNovels.length) // Debug log
-    console.log('First novel status:', processedNovels[0]?.status) // Debug log
-
-    // AND logic: only novels that have ALL selected genres
-    let filteredNovels = processedNovels
-    let filteredTotal = total
-    if (genres.length > 0) {
-      filteredNovels = processedNovels.filter(novel => {
-        const novelGenreNames = novel.novel_genres.map(ng => ng.genres.name)
-        return genres.every(g => novelGenreNames.includes(g))
-      })
-      filteredTotal = filteredNovels.length
-    }
-
-    // Pagination after filtering
-    const paginatedNovels = filteredNovels.slice((page - 1) * limit, page * limit)
-
-    return { novels: paginatedNovels, total: filteredTotal, page, limit }
   } catch (error) {
     console.error('Error fetching novels:', error)
-    return { novels: [], total: 0, page: 1, limit: 12 }
+    throw error
   }
 }
 
@@ -184,7 +90,9 @@ async function getGenres() {
         genre_id: true,
         name: true
       },
-      orderBy: { name: 'asc' }
+      orderBy: {
+        name: 'asc'
+      }
     })
   } catch (error) {
     console.error('Error fetching genres:', error)
@@ -211,13 +119,10 @@ export default async function NovelsPage({ searchParams }) {
     const safeSearchParams = await toPlainObject(searchParams)
     
     // Get novels and genres
-    const [{ novels, total, page, limit }, genres] = await Promise.all([
-      getNovels(safeSearchParams),
+    const [{ novels, totalPages, currentPage }, genres] = await Promise.all([
+      getNovels(safeSearchParams.page, safeSearchParams.limit, safeSearchParams.sort, safeSearchParams.genre, safeSearchParams.search),
       getGenres()
     ])
-
-    const totalPages = Math.ceil(total / limit)
-    const currentPage = page
 
     // Create a safe query string
     const queryString = Object.entries(safeSearchParams)

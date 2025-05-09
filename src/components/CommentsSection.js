@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { FaReply } from 'react-icons/fa'
 import toast from 'react-hot-toast'
+import Image from 'next/image'
 
 export default function CommentsSection({ novelId, comments: initialComments = [] }) {
   const { data: session } = useSession()
@@ -155,11 +156,23 @@ export default function CommentsSection({ novelId, comments: initialComments = [
     <div className="pt-4">
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0">
-          <div className={`${isReply ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-purple-600 flex items-center justify-center`}>
-            <span className="text-white font-medium">
-              {comment.users?.username?.[0]?.toUpperCase() || 'A'}
-            </span>
-          </div>
+          {comment.users?.avatar_url ? (
+            <div className={`${isReply ? 'w-8 h-8' : 'w-10 h-10'} rounded-full overflow-hidden`}>
+              <Image
+                src={comment.users.avatar_url}
+                alt={comment.users.display_name || comment.users.username}
+                width={isReply ? 32 : 40}
+                height={isReply ? 32 : 40}
+                className="object-cover"
+              />
+            </div>
+          ) : (
+            <div className={`${isReply ? 'w-8 h-8' : 'w-10 h-10'} rounded-full bg-purple-600 flex items-center justify-center`}>
+              <span className="text-white font-medium">
+                {comment.users?.username?.[0]?.toUpperCase() || 'A'}
+              </span>
+            </div>
+          )}
         </div>
         <div className="flex-grow space-y-2">
           <div className="flex items-center gap-2">
@@ -188,11 +201,23 @@ export default function CommentsSection({ novelId, comments: initialComments = [
             <div key={reply.comment_id} className="pl-4">
               <div className="flex items-start gap-3">
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 rounded-full bg-purple-600/80 flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">
-                      {reply.users?.username?.[0]?.toUpperCase() || 'A'}
-                    </span>
-                  </div>
+                  {reply.users?.avatar_url ? (
+                    <div className="w-8 h-8 rounded-full overflow-hidden">
+                      <Image
+                        src={reply.users.avatar_url}
+                        alt={reply.users.display_name || reply.users.username}
+                        width={32}
+                        height={32}
+                        className="object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-purple-600/80 flex items-center justify-center">
+                      <span className="text-white text-sm font-medium">
+                        {reply.users?.username?.[0]?.toUpperCase() || 'A'}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <div className="flex-grow space-y-2">
                   <div className="flex items-center gap-2">

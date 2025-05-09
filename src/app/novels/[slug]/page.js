@@ -76,6 +76,7 @@ async function getComments(novelId) {
         users: {
           select: {
             username: true,
+            display_name: true,
             avatar_url: true
           }
         },
@@ -84,6 +85,7 @@ async function getComments(novelId) {
             users: {
               select: {
                 username: true,
+                display_name: true,
                 avatar_url: true
               }
             }
