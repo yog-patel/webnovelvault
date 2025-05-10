@@ -42,19 +42,19 @@ async function getNovelsDirect() {
     // Newest novels
     const newest = await prisma.novels.findMany({
       orderBy: { created_at: 'desc' },
-      take: 6,
+      take: 12,
       select: baseSelect
     })
     // Popular novels
     const popular = await prisma.novels.findMany({
       orderBy: { view_count: 'desc' },
-      take: 6,
+      take: 12,
       select: baseSelect
     })
     // Completed novels
     const completed = await prisma.novels.findMany({
       where: { status: 'completed' },
-      take: 6,
+      take: 12,
       select: baseSelect
     })
 
