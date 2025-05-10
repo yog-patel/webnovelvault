@@ -2,6 +2,7 @@
 
 import { SessionProvider } from 'next-auth/react'
 import { ErrorBoundary } from 'react-error-boundary'
+import { Analytics } from "@vercel/analytics/next"
 
 function ErrorFallback({ error, resetErrorBoundary }) {
   return (
@@ -25,6 +26,7 @@ export default function Providers({ children }) {
     <ErrorBoundary FallbackComponent={ErrorFallback}>
       <SessionProvider>
         {children}
+        <Analytics />
       </SessionProvider>
     </ErrorBoundary>
   )

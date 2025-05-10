@@ -285,7 +285,7 @@ async function getNovels(searchParams = {}) {
     const sort = params?.sort || 'newest'
     const featured = params?.featured || null
     const page = parseInt(params?.page || '1')
-    const limit = parseInt(params?.limit || '12')
+    const limit = parseInt(params?.limit || '18')
 
     const where = {}
     
@@ -444,7 +444,7 @@ async function getNovels(searchParams = {}) {
     return { novels: paginatedNovels, total: filteredTotal, page, limit }
   } catch (error) {
     console.error('Error fetching novels:', error)
-    return { novels: [], total: 0, page: 1, limit: 12 }
+    return { novels: [], total: 0, page: 1, limit: 18 }
   }
 }
 
