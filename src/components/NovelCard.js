@@ -64,9 +64,6 @@ export default function NovelCard({ novel, rankingStat }) {
           <h3 className="text-sm h-10 font-medium text-white mb-1 line-clamp-2 group-hover:text-purple-400 transition-colors">
             {novel.title}
           </h3>
-          {/* <p className="text-xs text-gray-400 mb-2 line-clamp-1">
-            {novel.author}
-          </p> */}
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-400">
               {(novel.total_chapters ?? novel._count?.chapters ?? 0)} Chapters
