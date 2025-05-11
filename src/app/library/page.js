@@ -401,9 +401,6 @@ export default function LibraryPage() {
                           <div className="text-xl text-gray-400">
                             Progress: {progress.current} / {progress.total} ({progress.percentage}%)
                           </div>
-                          {/* <div className="text-xs text-green-500 font-medium">
-                            New Chapters
-                          </div> */}
                         </div>
                       </div>
             
