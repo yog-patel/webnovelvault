@@ -6,6 +6,7 @@ import { FaBook, FaTrophy, FaSearch, FaUser, FaBookmark, FaBars, FaTimes, FaHome
 import { useSession } from 'next-auth/react'
 import { useState, useEffect } from 'react'
 import SearchDropdown from './SearchDropdown'
+import Footer from './Footer'
 
 export default function Layout({ children }) {
   const pathname = usePathname()
@@ -78,7 +79,13 @@ export default function Layout({ children }) {
                   />
                   <FaSearch className="absolute right-3 top-3 text-gray-400" />
                 </div>
-                <SearchDropdown isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+                <SearchDropdown
+                  key="search-dropdown"
+                  isOpen={isSearchOpen}
+                  onClose={() => setIsSearchOpen(false)}
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery}
+                />
               </div>
 
               {session ? (
@@ -143,7 +150,13 @@ export default function Layout({ children }) {
                 />
                 <FaSearch className="absolute right-3 top-3 text-gray-400" />
               </div>
-              <SearchDropdown isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+              <SearchDropdown
+                key="mobile-search-dropdown"
+                isOpen={isSearchOpen}
+                onClose={() => setIsSearchOpen(false)}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+              />
             </div>
 
             {navItems.map((item) => (
@@ -207,6 +220,7 @@ export default function Layout({ children }) {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {children}
       </main>
+      <Footer />
     </div>
   )
-} 
+}
