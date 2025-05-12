@@ -14,6 +14,9 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" href="/big_fav_icon.png" type="image/png" />
+      </head>
       <body className={inter.className}>
         <Providers>
           <Layout>
