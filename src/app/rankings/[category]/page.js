@@ -128,96 +128,112 @@ async function getRankedNovels(category) {
   }))
 }
 
-export default async function RankingsPage({ params: { category: rawCategory } }) {
-  const category = rawCategory || 'rank'
+export default async function RankingsPage(props) {
+  try {
+    const params = await Promise.resolve(props.params)
+    const rawCategory = params?.category
+    const category = rawCategory || 'rank'
 
-  // Validate category
-  if (!rankingTabs.find(tab => tab.id === category)) {
-    notFound()
-  }
+    // Validate category
+    if (!rankingTabs.find(tab => tab.id === category)) {
+      notFound()
+    }
 
-  const novels = await getRankedNovels(category)
-  const { title, description } = getRankingTitle(category)
+    const novels = await getRankedNovels(category)
+    const { title, description } = getRankingTitle(category)
 
-  return (
-    <div className="min-h-screen bg-gray-900 text-gray-100 p-6">
-      {/* Ranking Tabs */}
-      <div className="flex flex-wrap gap-2 mb-8">
-        {rankingTabs.map((tab) => (
-          <Link
-            key={tab.id}
-            href={`/rankings/${tab.id}`}
-            className={`flex-1 min-w-[150px] p-4 rounded-lg ${
-              tab.id === category
-                ? 'bg-indigo-900 bg-opacity-50'
-                : 'bg-gray-800 hover:bg-gray-700'
-            }`}
-          >
-            <h3 className="text-lg font-semibold mb-1">{tab.label}</h3>
-            <p className="text-sm text-gray-400">{tab.description}</p>
-          </Link>
-        ))}
-      </div>
+    return (
+      <div className="min-h-screen bg-gray-900 text-gray-100 p-6">
+        {/* Ranking Tabs */}
+        <div className="flex flex-wrap gap-2 mb-8">
+          {rankingTabs.map((tab) => (
+            <Link
+              key={tab.id}
+              href={`/rankings/${tab.id}`}
+              className={`flex-1 min-w-[150px] p-4 rounded-lg ${
+                tab.id === category
+                  ? 'bg-indigo-900 bg-opacity-50'
+                  : 'bg-gray-800 hover:bg-gray-700'
+              }`}
+            >
+              <h3 className="text-lg font-semibold mb-1">{tab.label}</h3>
+              <p className="text-sm text-gray-400">{tab.description}</p>
+            </Link>
+          ))}
+        </div>
 
-      {/* Ranking Title */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">{title}</h1>
-        <p className="text-gray-400">{description}</p>
-      </div>
+        {/* Ranking Title */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">{title}</h1>
+          <p className="text-gray-400">{description}</p>
+        </div>
 
-      {/* Novel Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {novels.map((novel, index) => (
-          <div key={novel.novel_id} className="relative">
-            {/* Ranking Number */}
-            <div className="absolute -left-2 -top-2 z-10 w-10 h-10 bg-amber-700 text-white flex items-center justify-center rounded-lg font-bold text-xl shadow-lg">
-              {String(index + 1).padStart(2, '0')}
-            </div>
-            
-            {/* Status Badge */}
-            <div className="absolute right-2 top-2 z-10">
-              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                novel.status === 'COMPLETED' 
-                  ? 'bg-indigo-900 text-indigo-100'
-                  : 'bg-purple-900 text-purple-100'
-              }`}>
-                {novel.status === 'COMPLETED' ? 'COMPLETED' : 'ONGOING'}
-              </span>
-            </div>
-
-            {/* Novel Card */}
-            <div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300">
-              <NovelCard 
-                novel={novel}
-                rankingStat={
-                  category === 'rating' ? { label: 'Rating', value: novel.average_rating?.toFixed(1) || 'N/A' } :
-                  category === 'reads' ? { label: 'Views', value: novel.view_count?.toLocaleString() } :
-                  category === 'comments' ? { label: 'Comments', value: novel._count.novel_comments } :
-                  category === 'bookmarks' ? { label: 'Bookmarks', value: novel._count.bookmarks } :
-                  null
-                }
-              />
+        {/* Novel Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {novels.map((novel, index) => (
+            <div key={novel.novel_id} className="relative">
+              {/* Ranking Number */}
+              <div className="absolute -left-2 -top-2 z-10 w-10 h-10 bg-amber-700 text-white flex items-center justify-center rounded-lg font-bold text-xl shadow-lg">
+                {String(index + 1).padStart(2, '0')}
+              </div>
               
-              {/* Genre Tags */}
-              {/* <div className="px-4 py-2 border-t border-gray-700">
-                <div className="flex flex-wrap gap-2">
-                  {novel.novel_genres?.map(({ genres }) => (
-                    <span
-                      key={genres.genre_id}
-                      className="px-2 py-1 bg-gray-700 rounded-md text-xs text-gray-300"
-                    >
-                      {genres.name}
-                    </span>
-                  ))}
-                </div>
-              </div> */}
+              {/* Status Badge */}
+              <div className="absolute right-2 top-2 z-10">
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  novel.status === 'COMPLETED' 
+                    ? 'bg-indigo-900 text-indigo-100'
+                    : 'bg-purple-900 text-purple-100'
+                }`}>
+                  {novel.status === 'COMPLETED' ? 'COMPLETED' : 'ONGOING'}
+                </span>
+              </div>
 
-              {/* Ranking Stats */}
-              {/* Moved to NovelCard */}
+              {/* Novel Card */}
+              <div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-300">
+                <NovelCard 
+                  novel={novel}
+                  rankingStat={
+                    category === 'rating' ? { label: 'Rating', value: novel.average_rating?.toFixed(1) || 'N/A' } :
+                    category === 'reads' ? { label: 'Views', value: novel.view_count?.toLocaleString() } :
+                    category === 'comments' ? { label: 'Comments', value: novel._count.novel_comments } :
+                    category === 'bookmarks' ? { label: 'Bookmarks', value: novel._count.bookmarks } :
+                    null
+                  }
+                />
+                
+                {/* Genre Tags */}
+                {/* <div className="px-4 py-2 border-t border-gray-700">
+                  <div className="flex flex-wrap gap-2">
+                    {novel.novel_genres?.map(({ genres }) => (
+                      <span
+                        key={genres.genre_id}
+                        className="px-2 py-1 bg-gray-700 rounded-md text-xs text-gray-300"
+                      >
+                        {genres.name}
+                      </span>
+                    ))}
+                  </div>
+                </div> */}
+
+                {/* Ranking Stats */}
+                {/* Moved to NovelCard */}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-    </div>
-  )
-} 
+    )
+  } catch (error) {
+    console.error('Error in RankingsPage:', error)
+    return (
+      <div className="text-center py-8">
+        <h2 className="text-2xl font-semibold text-gray-300 mb-4">Unable to load rankings</h2>
+        <p className="text-gray-400">
+          {process.env.NODE_ENV !== 'production'
+            ? (error?.message || String(error))
+            : 'The server is busy or unavailable. Please try again later.'}
+        </p>
+      </div>
+    )
+  }
+}
