@@ -8,7 +8,10 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
   title: 'Web Novel Vault - Read Novels Online',
-  description: 'A platform for reading novels online for free',
+  description: 'A platform for reading web novels and light novels online for free',
+  icons: {
+    icon: '/big_fav_icon.png',
+  },
 }
 
 export default function RootLayout({ children }) {
