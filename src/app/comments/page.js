@@ -285,7 +285,7 @@ export default async function NovelsPage({ searchParams }) {
 
               {/* Next Button */}
               <Link
-                href={`/novels?page=${currentPage + 1}${queryString ? `&${queryString}` : ''}`}
+                href={`/novels?page={currentPage + 1}${queryString ? `&${queryString}` : ''}`}
                 className={`px-3 py-2 rounded ${currentPage === totalPages ? 'bg-gray-300 text-gray-400 cursor-not-allowed' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
                 aria-disabled={currentPage === totalPages}
                 tabIndex={currentPage === totalPages ? -1 : 0}
