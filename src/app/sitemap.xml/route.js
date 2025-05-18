@@ -11,7 +11,7 @@ export async function GET() {
     'contact'
   ]
 
-  const baseUrl = 'https://webnovelvault.vercel.app' // No trailing slash
+  const baseUrl = 'https://www.webnovelvault.com' // No trailing slash
 
   // Fetch all novel slugs from the database
   let novelSlugs = []
