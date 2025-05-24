@@ -3,12 +3,8 @@ import prisma from '@/lib/prisma'
 
 export async function GET() {
   try {
-    // Test database connection
-    await prisma.$connect()
-    
-    // Try to count novels
+    // No need to manually connect/disconnect
     const count = await prisma.novels.count()
-    
     return NextResponse.json({
       status: 'success',
       message: 'Database connection successful',
@@ -21,11 +17,5 @@ export async function GET() {
       message: error.message,
       error: process.env.NODE_ENV === 'development' ? error.stack : undefined
     }, { status: 500 })
-  } finally {
-    try {
-      await prisma.$disconnect()
-    } catch (error) {
-      console.error('Error disconnecting:', error)
-    }
   }
-} 
+}

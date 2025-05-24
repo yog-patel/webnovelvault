@@ -14,21 +14,6 @@ export async function GET() {
       })
     }
 
-    // Test database connection
-    try {
-      await prisma.$connect()
-      console.log('Database connection successful')
-    } catch (error) {
-      console.error('Database connection error:', error)
-      console.error('Database URL:', process.env.DATABASE_URL ? 'Set' : 'Not set')
-      return NextResponse.json({
-        featured: [],
-        newest: [],
-        popular: [],
-        completed: []
-      })
-    }
-
     // Define the base select object to minimize data fetched
     const baseSelect = {
       novel_id: true,
@@ -140,11 +125,5 @@ export async function GET() {
       popular: [],
       completed: []
     })
-  } finally {
-    try {
-      await prisma.$disconnect()
-    } catch (error) {
-      console.error('Error disconnecting from database:', error)
-    }
   }
-} 
+}

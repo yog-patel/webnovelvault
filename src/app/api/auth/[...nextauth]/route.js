@@ -67,4 +67,6 @@ const handler = NextAuth({
   secret: process.env.NEXTAUTH_SECRET,
 })
 
-export { handler as GET, handler as POST } 
+// No changes needed, uses singleton prisma import
+
+export { handler as GET, handler as POST }
